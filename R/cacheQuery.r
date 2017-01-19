@@ -15,10 +15,10 @@
 #' @param format either \code{csv} for comma separated value files or \code{rda} for R data files.
 #' @return a data frame.
 #' @export
-cacheQuery <- function(query=NULL, dir=getOption("sqlutils.dir"), 
-					   filename=getCacheFilename(query=query, dir=dir, ext=format, ...), 
-					   format=ifelse(is.null(getOption("sqlutils.format")), 'rda', getOption("sqlutils.ext")), 
-					   maxLevels=20, 
+cacheQuery <- function(query=NULL, dir=getwd(),
+					   filename=getCacheFilename(query=query, dir=dir, ext=format, ...),
+					   format='rda',
+					   maxLevels=20,
 					   ...) {
   query.file <- sqlFile(query)
   if (!is.null(query.file)) {
@@ -39,7 +39,7 @@ cacheQuery <- function(query=NULL, dir=getOption("sqlutils.dir"),
         }
       }
 		## } else if(tolower(format) == 'csv') {
-		## 	df = read.csv(filename)			
+		## 	df = read.csv(filename)
 		} else {
 			stop('Unsupported format type.')
 		}
