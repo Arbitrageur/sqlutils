@@ -6,7 +6,7 @@
 #' @param ... query parameters.
 #' @return full filepath to the cached file.
 #' @export
-getCacheFilename <- function(query, dir=getwd(), ext='csv', ...) {
+getCacheFilename <- function(query, dir=getOption("sqlutils.dir"), ext=getOption("sqlutils.format"), ...) {
 	parms = getParameters(query)
 	parmvals = unlist(list(...))
 	filename = paste(dir, '/', query, sep='')

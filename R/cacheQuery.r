@@ -15,28 +15,45 @@
 #' @param format either \code{csv} for comma separated value files or \code{rda} for R data files.
 #' @return a data frame.
 #' @export
-cacheQuery <- function(query=NULL, dir=getwd(), 
+cacheQuery <- function(query=NULL, dir=getOption("sqlutils.dir"), 
 					   filename=getCacheFilename(query=query, dir=dir, ext=format, ...), 
-					   format='rda', 
+					   format=ifelse(is.null(getOption("sqlutils.format")), 'rda', getOption("sqlutils.ext")), 
 					   maxLevels=20, 
 					   ...) {
-	if(file.exists(filename)) {
+  query.file <- sqlFile(query)
+  if (!is.null(query.file)) {
+    hash <- digest::digest(query.file, algo = "sha256", file = TRUE)
+  }
+  validCache <- FALSE
+  if(file.exists(filename)) {
 		message(paste("Reading from cached query file: ", filename, sep=''))
 		if(tolower(format) == 'rda') {
-			load(filename)
-		} else if(tolower(format) == 'csv') {
-			df = read.csv(filename)			
+      tmp.env <- new.env()
+			load(filename, envir = tmp.env)
+      on.exit(rm(tmp.env))
+      if (exists("hash", envir = tmp.env)) {
+        hash.compare <- get("hash", envir = tmp.env)
+        if (hash == hash.compare) {
+          df <- get("df", envir = tmp.env)
+          validCache <- TRUE
+        }
+      }
+		## } else if(tolower(format) == 'csv') {
+		## 	df = read.csv(filename)			
 		} else {
 			stop('Unsupported format type.')
 		}
-		df = recodeColumns(df, maxLevels)
-	} else {
+    if (validCache) {
+      df = recodeColumns(df, maxLevels)
+    }
+	}
+  if (!validCache) {
 		message(paste("Executing ", query, " and saving to ", filename, sep=''))
 		df = execQuery(query=query, maxLevels=maxLevels, ...)
 		if(tolower(format) == 'rda') {
-			save(df, file=filename)
-		} else if(tolower(format) == 'csv') {
-			write.csv(df, filename, row.names=FALSE)
+			save(df, hash, file=filename)
+		## } else if(tolower(format) == 'csv') {
+		## 	write.csv(df, filename, row.names=FALSE)
 		} else {
 			stop('Unsupported format type.')
 		}
